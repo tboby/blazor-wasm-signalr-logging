@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.Extensions.Logging
 @inject NavigationManager NavigationManager
 @implements IDisposable
 
@@ -22,12 +23,11 @@
 <ul id="messagesList">
     @foreach (var message in messages)
     {
-        <li>@message</li>
-    }
+<li>@message</li>
+}
 </ul>
 
-@code {
-    private HubConnection hubConnection;
+@code { private HubConnection hubConnection;
     private List<string> messages = new List<string>();
     private string userInput;
     private string messageInput;
@@ -36,6 +36,15 @@
     {
         hubConnection = new HubConnectionBuilder()
             .WithUrl(NavigationManager.ToAbsoluteUri("/chatHub"))
+            .ConfigureLogging(logging =>
+            {
+            // Log to the Console
+            logging.AddConsole();
+
+            // This will set ALL logging to Debug level
+            logging.SetMinimumLevel(LogLevel.Debug);
+            })
+
             .Build();
 
         hubConnection.On<string, string>("ReceiveMessage", (user, message) =>
@@ -53,9 +62,8 @@
 
     public bool IsConnected =>
         hubConnection.State == HubConnectionState.Connected;
-        
+
     public void Dispose()
     {
         _ = hubConnection.DisposeAsync();
-    }
-}
+    } }
